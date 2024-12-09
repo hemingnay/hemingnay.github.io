@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-weight: bold; /* Title made bold */
+            color: #006603;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+
+        label {
+            margin-bottom: 5px;
+            font-weight: normal;
+        }
+
+        textarea {
+            height: 150px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            resize: none;
+            margin-right: 0;
+        }
+
+        textarea.error {
+            border: 1px solid red; /* Red border for empty input */
+        }
+
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        select, button {
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        select {
+            width: 200px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #22a026;
+            color: white;
+            border: none;
+            font-weight: bold;
+            padding: 12px 32px; /* 8px top/bottom, 24px left/right */
+            margin-top: 0;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        #output {
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            text-align: left; /* Left align output text */
+        }
+
+        .readability-score {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #007b5e;
+        }
+
+        .readability-stats {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        h3, .tone-of-voice {
+            font-weight: bold;
+            color: #4CAF50;
+            font-size: 1.1em;
+        }
+
+        p {
+            margin: 5px 0;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .underline {
+            text-decoration: underline;
+        }
+
+        ul {
+            padding-left: 20px;
+            list-style-type: none;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        .snippet {
+            font-style: italic;
+            margin-left: 20px;
+        }
+
+        .error-word {
+            font-weight: 900;
+            font-style: italic;
+            text-decoration: underline; /* Underline error word */
+            color: red;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div style="width: 80%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-weight: bolder;">
+    <h1 style="font-weight: 900;">Tone of Voice & Reading Level Checker</h1>
+    </div>
+    
+    <div class="card">
+        <div class="input-container">
+            <label for="voiceCheck" style="color:#2a2a2a">Check for voice tone:</label>
+            <select id="voiceCheck">
+                <option value="none">None</option>
+                <option value="passive">Passive voice</option>
+                <option value="active">Active voice</option>
+            </select>
+
+            <textarea id="input" placeholder="Enter your text here..."></textarea>
+            <div id="error-message" class="error-message"></div> <!-- Error message -->
+        </div>
+        
+        <div class="button-container">
+            <button id="analyzeButton">Analyze</button>
+        </div>
+    </div>
+
+    <div id="output" class="card">Your results will be displayed here 😃</div>
+
+    <script src="https://unpkg.com/compromise"></script>
+    <script>
+        document.getElementById('analyzeButton').addEventListener('click', function() {
+            const inputText = document.getElementById('input').value.trim();
+            const voiceOption = document.getElementById('voiceCheck').value;
+            const outputDiv = document.getElementById('output');
+            const errorMessageDiv = document.getElementById('error-message');
+
+            // Clear error message and reset textarea border
+            errorMessageDiv.textContent = '';
+            document.getElementById('input').classList.remove('error');
+            
+            if (!inputText) {
+                document.getElementById('input').classList.add('error'); // Add red border
+                errorMessageDiv.textContent = 'Please enter text.'; // Display error message
+                return;
+            }
+
+            // Flesch-Kincaid Grade Level Calculation
+            function calculateFleschKincaidGrade(text) {
+                const words = text.split(/\s+/).length;
+                const sentences = text.split(/[.!?]+/).length;
+                const syllables = text.match(/[aeiouy]{1,2}/gi) ? text.match(/[aeiouy]{1,2}/gi).length : 0;
+
+                const grade = 0.39 * (words / sentences) + 11.8 * (syllables / words) - 15.59;
+                return grade;
+            }
+
+            let fleschKincaidScore = calculateFleschKincaidGrade(inputText);
+            if (fleschKincaidScore <= 0) {
+                fleschKincaidScore = 0; // If score is 0 or below, set it to 0
+            }
+            const roundedScore = fleschKincaidScore <= 0 ? 1 : Math.round(fleschKincaidScore); // Readability level grade 1 for 0 or below
+            const readability = `Your text readability is Grade <span class="bold">${roundedScore}</span> (Flesch-Kincaid score: <span class="bold">${fleschKincaidScore.toFixed(2)}</span>).`;
+
+            const wordCount = inputText.split(/\s+/).length;
+            const sentenceCount = inputText.split(/[.!?]+/).length;
+
+            // Using compromise for voice detection
+            const doc = nlp(inputText);
+            const sentences = doc.sentences().out('array');
+            outputDiv.innerHTML = "Your results will be displayed here 😃"; // Reset message
+            const activeSentences = [];
+            const passiveSentences = [];
+
+            sentences.forEach((sentence) => {
+                const parsedSentence = nlp(sentence);
+                if (parsedSentence.has('#Passive')) {
+                    passiveSentences.push(sentence);
+                } else {
+                    activeSentences.push(sentence);
+                }
+            });
+
+            outputDiv.innerHTML = `<p class="readability-score">${readability}</p>
+                                    <p class="readability-stats">Words: ${wordCount} | Sentences: ${sentenceCount}</p><br>`;
+
+            // Tone of voice section
+            outputDiv.innerHTML += `<div class="tone-of-voice">Tone of voice - ${voiceOption}:</div><br>`; // Title for tone of voice section
+
+            if (voiceOption === 'passive' || voiceOption === 'active') {
+                if (voiceOption === 'passive') {
+                    if (passiveSentences.length > 0) {
+                        passiveSentences.forEach((sentence, index) => {
+                            outputDiv.innerHTML += `<p>${index + 1}. ${sentence}</p>`;
+                        });
+                    } else {
+                        outputDiv.innerHTML += '<p>No passive voice detected.</p>';
+                    }
+                } else if (voiceOption === 'active') {
+                    if (activeSentences.length > 0) {
+                        activeSentences.forEach((sentence, index) => {
+                            outputDiv.innerHTML += `<p>${index + 1}. ${sentence}</p>`;
+                        });
+                    } else {
+                        outputDiv.innerHTML += '<p>No active voice detected.</p>';
+                    }
+                }
+            } else {
+                outputDiv.innerHTML += '<p>No voice tone check selected.</p>';
+            }
+
+            // Check spelling and grammar
+            const checkGrammarAndSpelling = async (text) => {
+                const url = 'https://api.languagetool.org/v2/check';
+                const params = new URLSearchParams({
+                    text: text,
+                    language: 'en-US'
+                });
+                
+                try {
+                    const response = await fetch(url, { method: 'POST', body: params });
+                    const data = await response.json();
+
+                    if (data.matches && data.matches.length > 0) {
+                        const errors = data.matches.map(match => {
+                            const words = text.split(/\s+/);
+                            const startIndex = Math.max(0, words.indexOf(text.slice(match.offset, match.offset + match.length).trim()) - 3);
+                            const endIndex = Math.min(words.length, words.indexOf(text.slice(match.offset, match.offset + match.length).trim()) + 4);
+                            const errorSnippet = words.slice(startIndex, endIndex).join(' ');
+
+                            return {
+                                message: match.message,
+                                snippet: errorSnippet,
+                                errorWord: text.slice(match.offset, match.offset + match.length).trim()
+                            };
+                        });
+
+                        outputDiv.innerHTML += '<br><h3>Spelling and Grammar Issues:</h3>';
+                        errors.forEach((error, index) => {
+                            const highlightedSnippet = error.snippet.replace(error.errorWord, `<span class="error-word">${error.errorWord}</span>`);
+                            outputDiv.innerHTML += `
+                                <p>
+                                    <span class="bold">${index + 1}. ${error.message}</span><br>
+                                    <span class="snippet">${highlightedSnippet}</span>
+                                </p>`;
+                        });
+                    } else {
+                        outputDiv.innerHTML += '<p>No spelling or grammar issues detected!</p>';
+                    }
+                } catch (error) {
+                    console.error('Error checking grammar and spelling:', error);
+                }
+            };
+
+            checkGrammarAndSpelling(inputText);
+        });
+    </script>
+
+</body>
+</html>
