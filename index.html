@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hemingnay</title>
-    <link rel="icon" type="image/x-icon" href="../icon.ico">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="../Hemingnay/icon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: #f4f7f6;
             margin: 0;
             padding: 0;
@@ -21,9 +21,27 @@
         }
 
         h1 {
-            font-weight: bold; /* Title made bold */
-            color: #22a026;
+            font-weight: 700; /* Title made bold */
             margin-bottom: 20px;
+            background-image: linear-gradient(to top, #0959af, #006eff, #007AFF); /* Three-color gradient */
+            -webkit-background-clip: text; /* Clip the background to text (for webkit-based browsers) */
+            background-clip: text; /* Standard property */
+            color: transparent; /* Make text color transparent to show the gradient */
+        }
+
+        h2 {
+            font-weight: 700;
+            color: #3a3a3a;
+            margin-bottom: 20px;
+        }
+
+        a {
+            color: #007AFF;
+            text-decoration: none;
+        }
+
+        a:visited, a:hover, a:focus, a:active {
+            color: #007AFF;
         }
 
         .card {
@@ -78,7 +96,7 @@
         }
 
         button {
-            background-color: #22a026;
+            background-color: #007AFF;
             color: white;
             border: none;
             font-weight: bold;
@@ -103,7 +121,7 @@
         .readability-score {
             font-size: 1.5em;
             font-weight: bold;
-            color: #007b5e;
+            color: #3a3a3a;
         }
 
         .readability-stats {
@@ -113,12 +131,15 @@
 
         h3, .tone-of-voice {
             font-weight: bold;
-            color: #4CAF50;
+            color: #3a3a3a;
             font-size: 1.1em;
+            margin-block-start: 0.65em;
+            margin-block-end: 0.65em;
         }
 
         p {
             margin: 5px 0;
+            color: #4d4d4d;
         }
 
         .bold {
@@ -144,18 +165,51 @@
         }
 
         .error-word {
-            font-weight: 900;
             font-style: italic;
             text-decoration: underline; /* Underline error word */
-            color: red;
+            color: rgb(224, 63, 9);
         }
+
+        .drawer {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 33%;
+        max-width: 400px;
+        height: 100%;
+        background: white;
+        box-shadow: -4px 0 8px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        overflow-y: auto;
+        transition: right 0.3s ease;
+        z-index: 1000;
+        }
+
+        .drawer.open {
+            right: 0;
+        }
+
+        .drawer .close-button {
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            color: #333;
+            text-align: right;
+        }
+
+        @media (max-width: 1320px) {
+            .drawer {
+                width: 100%;
+            }
+        }
+
 
     </style>
 </head>
 <body>
 
     <div style="width: 80%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-weight: bolder;">
-    <h1 style="font-weight: 900;">Tone of Voice & Reading Level Checker</h1>
+    <h1>Tone of Voice & Reading Level Checker</h1>
     </div>
     
     <div class="card">
@@ -214,8 +268,7 @@
             const readability = `Your text readability is Grade <span class="bold">${roundedScore}</span> (Flesch-Kincaid score: <span class="bold">${fleschKincaidScore.toFixed(2)}</span>).`;
 
             const wordCount = inputText.split(/\s+/).length;
-            const sentenceCount = inputText.split(/[.!?]+/).length;
-
+            const sentenceCount = (inputText.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || []).length;
             // Using compromise for voice detection
             const doc = nlp(inputText);
             const sentences = doc.sentences().out('array');
@@ -236,7 +289,7 @@
                                     <p class="readability-stats">Words: ${wordCount} | Sentences: ${sentenceCount}</p><br>`;
 
             // Tone of voice section
-            outputDiv.innerHTML += `<div class="tone-of-voice">Tone of voice - ${voiceOption}:</div><br>`; // Title for tone of voice section
+            outputDiv.innerHTML += `<div class="tone-of-voice" style="margin-block-end: 0.65em; margin-block-start: 0.65em;">Tone of voice - ${voiceOption}:</div>`; // Title for tone of voice section
 
             if (voiceOption === 'passive' || voiceOption === 'active') {
                 if (voiceOption === 'passive') {
@@ -285,13 +338,12 @@
                                 errorWord: text.slice(match.offset, match.offset + match.length).trim()
                             };
                         });
-
                         outputDiv.innerHTML += '<br><h3>Spelling and Grammar Issues:</h3>';
                         errors.forEach((error, index) => {
                             const highlightedSnippet = error.snippet.replace(error.errorWord, `<span class="error-word">${error.errorWord}</span>`);
                             outputDiv.innerHTML += `
                                 <p>
-                                    <span class="bold">${index + 1}. ${error.message}</span><br>
+                                    <span>${index + 1}. ${error.message}</span><br>
                                     <span class="snippet">${highlightedSnippet}</span>
                                 </p>`;
                         });
@@ -305,7 +357,53 @@
 
             checkGrammarAndSpelling(inputText);
         });
+
+        
     </script>
+
+    <script>
+
+document.addEventListener('DOMContentLoaded', function () {
+    const drawerLink = document.getElementById('drawerLink');
+    const drawer = document.getElementById('drawer');
+    const closeButton = drawer.querySelector('.close-button'); // Select the close button inside the drawer
+
+    if (drawerLink && drawer) {
+        drawerLink.addEventListener('click', function (event) {
+            event.preventDefault(); // Prevent the link from navigating
+            drawer.classList.toggle('open');
+        });
+    } else {
+        console.error('Drawer link or drawer element not found in the DOM.');
+    }
+
+    // Define the toggleDrawer function
+    function toggleDrawer() {
+        drawer.classList.toggle('open');
+    }
+
+    // Attach the toggleDrawer function to the close button
+    if (closeButton) {
+        closeButton.addEventListener('click', toggleDrawer);
+    } else {
+        console.error('Close button not found inside the drawer.');
+    }
+});
+
+
+
+    </script>
+
+<a href="#" id="drawerLink" style="display: block; text-align: center; margin-top: 20px;">Learn more about readability calculation</a>
+<div id="drawer" class="drawer">
+    <div class="close-button">×</div>
+    <h2>How Readability is Calculated</h2>
+    <p>The "Flesch–Kincaid Grade Level Formula" presents a readability score as a U.S. grade level, making it easier for people to judge the readability level of various texts. It can also mean the number of years of education generally required to understand text. The grade level is calculated with the following formula:</p><br>
+    <img style="width:95; margin-bottom: 20px;" src="../equation.svg"><br>
+    <p>The lowest grade level score in theory is −3.40 (belonging to the passage "Go. See. Stop. Rest." for example), but there are few real passages in which every sentence consists of a single one-syllable word. Green Eggs and Ham by Dr. Seuss comes close, averaging 5.7 words per sentence and 1.02 syllables per word, with a grade level of −1.3.</p><br>
+    <p>Read more on <a href="https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests" target="_blank">Wikipedia.</a></p>
+</div>
+
 
 </body>
 </html>
